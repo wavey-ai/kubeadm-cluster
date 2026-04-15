@@ -42,7 +42,6 @@ pacman -Syu --noconfirm
 pacman -S --needed --noconfirm \
   base-devel \
   ca-certificates \
-  cri-tools \
   containerd \
   conntrack-tools \
   cni-plugins \
