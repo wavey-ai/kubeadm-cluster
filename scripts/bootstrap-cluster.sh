@@ -35,6 +35,7 @@ copy_scripts() {
     "${ROOT_DIR}/scripts/install-arch-base.sh" \
     "${ROOT_DIR}/scripts/install-gpu-node.sh" \
     "${ROOT_DIR}/scripts/install-cluster-addons.sh" \
+    "${ROOT_DIR}/scripts/install-headlamp.sh" \
     root@"${host}":/root/
 }
 
