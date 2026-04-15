@@ -1,0 +1,35 @@
+controller:
+  kind: DaemonSet
+
+  ingressClassResource:
+    name: haproxy
+    default: false
+
+  ingressClass: haproxy
+
+  nodeSelector:
+    wavey.ai/ingress: "true"
+
+  daemonset:
+    useHostPort: true
+
+  config:
+    timeout-client: 1h
+    timeout-server: 1h
+    timeout-connect: 10s
+    timeout-http-request: 1m
+
+  service:
+    type: ClusterIP
+    enablePorts:
+      admin: false
+      quic: false
+      stat: false
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi

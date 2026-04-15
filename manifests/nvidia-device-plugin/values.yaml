@@ -1,0 +1,2 @@
+nodeSelector:
+  wavey.ai/gpu: "true"

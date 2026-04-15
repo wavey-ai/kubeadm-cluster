@@ -1,0 +1,15 @@
+cluster_name        = "wavey-kubeadm"
+region              = "us-ord"
+image               = "linode/arch"
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"
+
+admin_ipv4_cidrs = [
+  "203.0.113.10/32",
+]
+
+control_plane_type = "g8-dedicated-4-2"
+cpu_worker_type    = "g8-dedicated-4-2"
+gpu_worker_type    = "g2-gpu-rtx4000a1-s"
+
+pod_cidr = "10.244.0.0/16"
+service_cidr = "10.96.0.0/12"
