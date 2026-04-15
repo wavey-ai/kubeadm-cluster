@@ -50,6 +50,13 @@ wait_ssh() {
   exit 1
 }
 
+ensure_kernel_modules_present() {
+  local host="$1"
+  if ! ssh -o StrictHostKeyChecking=accept-new root@"${host}" 'test -d "/lib/modules/$(uname -r)"'; then
+    reboot_and_wait "${host}"
+  fi
+}
+
 reboot_and_wait() {
   local host="$1"
   ssh root@"${host}" "systemctl reboot" >/dev/null 2>&1 || true
@@ -59,6 +66,7 @@ reboot_and_wait() {
 
 for host in "${cp_public}" "${cpu_public}" "${gpu_public}"; do
   wait_ssh "${host}"
+  ensure_kernel_modules_present "${host}"
   copy_scripts "${host}"
 done
 
