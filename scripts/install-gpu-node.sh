@@ -3,10 +3,10 @@ set -euo pipefail
 
 pacman -Sy --noconfirm archlinux-keyring
 rm -rf /usr/lib/firmware/nvidia
-pacman -Syu --noconfirm
 pacman -S --needed --noconfirm \
   cuda \
   dkms \
+  linux \
   linux-headers \
   nvidia-container-toolkit \
   nvidia-open-dkms \

@@ -37,8 +37,6 @@ EOF
 sysctl --system
 
 pacman -Sy --noconfirm archlinux-keyring
-rm -rf /usr/lib/firmware/nvidia
-pacman -Syu --noconfirm
 pacman -S --needed --noconfirm \
   base-devel \
   ca-certificates \

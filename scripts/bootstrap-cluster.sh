@@ -73,9 +73,6 @@ done
 ssh root@"${cp_public}" "bash /root/install-arch-base.sh control-plane"
 ssh root@"${cpu_public}" "bash /root/install-arch-base.sh cpu-worker"
 ssh root@"${gpu_public}" "bash /root/install-arch-base.sh gpu-worker"
-reboot_and_wait "${cp_public}"
-reboot_and_wait "${cpu_public}"
-reboot_and_wait "${gpu_public}"
 
 ssh root@"${gpu_public}" "bash /root/install-gpu-node.sh"
 reboot_and_wait "${gpu_public}"
