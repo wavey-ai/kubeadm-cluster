@@ -2,6 +2,14 @@
 set -euo pipefail
 
 role="${1:-generic}"
+node_name="${2:-}"
+
+cat >/etc/pacman.d/mirrorlist <<'EOF'
+Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.theash.xyz/arch/$repo/os/$arch
+Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch
+EOF
 
 private_ipv4() {
   ip -4 -o addr show scope global \
@@ -14,6 +22,15 @@ node_ip="$(private_ipv4 || true)"
 if [[ -z "${node_ip}" ]]; then
   echo "failed to detect private IPv4 address" >&2
   exit 1
+fi
+
+if [[ -n "${node_name}" ]]; then
+  hostnamectl set-hostname "${node_name}"
+  cat >/etc/hosts <<EOF
+127.0.0.1 localhost
+::1 localhost
+${node_ip} ${node_name}
+EOF
 fi
 
 swapoff -a || true
@@ -37,6 +54,8 @@ EOF
 sysctl --system
 
 pacman -Sy --noconfirm archlinux-keyring
+rm -rf /usr/lib/firmware/nvidia
+pacman -Syu --noconfirm
 pacman -S --needed --noconfirm \
   base-devel \
   ca-certificates \
@@ -53,8 +72,8 @@ pacman -S --needed --noconfirm \
   kubeadm \
   kubectl \
   kubelet \
+  libseccomp \
   nftables \
-  openssh \
   rsync \
   socat \
   tar
@@ -74,6 +93,9 @@ KUBELET_EXTRA_ARGS=--node-ip=${node_ip}
 EOF
 
 systemctl enable --now systemd-timesyncd
+systemctl disable --now sshd.socket || true
+systemctl enable --now sshd.service
+systemctl restart sshd.service || true
 systemctl enable --now containerd
 systemctl enable kubelet
 

@@ -82,9 +82,9 @@ for host in "${cp_public}" "${cpu_public}" "${gpu_public}"; do
   copy_scripts "${host}"
 done
 
-run_remote_step "${cp_public}" "bash /root/install-arch-base.sh control-plane"
-run_remote_step "${cpu_public}" "bash /root/install-arch-base.sh cpu-worker"
-run_remote_step "${gpu_public}" "bash /root/install-arch-base.sh gpu-worker"
+run_remote_step "${cp_public}" "bash /root/install-arch-base.sh control-plane ${cp_label}"
+run_remote_step "${cpu_public}" "bash /root/install-arch-base.sh cpu-worker ${cpu_label}"
+run_remote_step "${gpu_public}" "bash /root/install-arch-base.sh gpu-worker ${gpu_label}"
 
 run_remote_step "${gpu_public}" "bash /root/install-gpu-node.sh"
 reboot_and_wait "${gpu_public}"

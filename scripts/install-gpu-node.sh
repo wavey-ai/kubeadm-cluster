@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+cat >/etc/pacman.d/mirrorlist <<'EOF'
+Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirror.theash.xyz/arch/$repo/os/$arch
+Server = https://america.mirror.pkgbuild.com/$repo/os/$arch
+Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch
+EOF
+
 pacman -Sy --noconfirm archlinux-keyring
 rm -rf /usr/lib/firmware/nvidia
 pacman -S --needed --noconfirm \
+  binutils \
   cuda \
   dkms \
   linux \
