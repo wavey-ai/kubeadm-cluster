@@ -64,32 +64,44 @@ reboot_and_wait() {
   wait_ssh "${host}"
 }
 
+run_remote_step() {
+  local host="$1"
+  shift
+
+  if ssh root@"${host}" "$@"; then
+    return 0
+  fi
+
+  wait_ssh "${host}"
+  ssh root@"${host}" "$@"
+}
+
 for host in "${cp_public}" "${cpu_public}" "${gpu_public}"; do
   wait_ssh "${host}"
   ensure_kernel_modules_present "${host}"
   copy_scripts "${host}"
 done
 
-ssh root@"${cp_public}" "bash /root/install-arch-base.sh control-plane"
-ssh root@"${cpu_public}" "bash /root/install-arch-base.sh cpu-worker"
-ssh root@"${gpu_public}" "bash /root/install-arch-base.sh gpu-worker"
+run_remote_step "${cp_public}" "bash /root/install-arch-base.sh control-plane"
+run_remote_step "${cpu_public}" "bash /root/install-arch-base.sh cpu-worker"
+run_remote_step "${gpu_public}" "bash /root/install-arch-base.sh gpu-worker"
 
-ssh root@"${gpu_public}" "bash /root/install-gpu-node.sh"
+run_remote_step "${gpu_public}" "bash /root/install-gpu-node.sh"
 reboot_and_wait "${gpu_public}"
 
-ssh root@"${cp_public}" "kubeadm init --apiserver-advertise-address=${cp_private} --pod-network-cidr=${pod_cidr} --service-cidr=${service_cidr} --apiserver-cert-extra-sans=${cp_public}" | tee "${TMP_DIR}/kubeadm-init.log"
+run_remote_step "${cp_public}" "kubeadm init --apiserver-advertise-address=${cp_private} --pod-network-cidr=${pod_cidr} --service-cidr=${service_cidr} --apiserver-cert-extra-sans=${cp_public}" | tee "${TMP_DIR}/kubeadm-init.log"
 ssh root@"${cp_public}" "mkdir -p /root/.kube && cp /etc/kubernetes/admin.conf /root/.kube/config"
-ssh root@"${cp_public}" "kubeadm token create --print-join-command" > "${TMP_DIR}/join.sh"
+run_remote_step "${cp_public}" "kubeadm token create --print-join-command" > "${TMP_DIR}/join.sh"
 chmod +x "${TMP_DIR}/join.sh"
 
 join_cmd="$(cat "${TMP_DIR}/join.sh")"
-ssh root@"${cpu_public}" "${join_cmd}"
-ssh root@"${gpu_public}" "${join_cmd}"
+run_remote_step "${cpu_public}" "${join_cmd}"
+run_remote_step "${gpu_public}" "${join_cmd}"
 
 scp -o StrictHostKeyChecking=accept-new -r \
   "${ROOT_DIR}/manifests" \
   root@"${cp_public}":/root/manifests
-ssh root@"${cp_public}" "bash /root/install-cluster-addons.sh ${cpu_label} ${gpu_label}"
+run_remote_step "${cp_public}" "bash /root/install-cluster-addons.sh ${cpu_label} ${gpu_label}"
 
 scp -o StrictHostKeyChecking=accept-new \
   root@"${cp_public}":/etc/kubernetes/admin.conf \
