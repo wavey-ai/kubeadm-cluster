@@ -11,10 +11,10 @@ config:
     externalSecret:
       enabled: true
       name: headlamp-oidc
-    issuerURL: "https://idp.wavey.io"
+    issuerURL: "https://idp.wavey.io/internal"
     callbackURL: "https://k8s-us-ord.wavey.io/oidc-callback"
     validatorClientID: "QdLiUA5RC81Q9o9itEAnh4CummEBksZ3"
-    validatorIssuerURL: "https://idp.wavey.io"
+    validatorIssuerURL: "https://idp.wavey.io/internal"
     scopes: "openid,email,profile"
     usePKCE: true
     useCookie: true
