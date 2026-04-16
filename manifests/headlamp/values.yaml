@@ -4,6 +4,20 @@ config:
   inCluster: true
   inClusterContextName: "wavey-us-ord"
   enableHelm: true
+  oidc:
+    secret:
+      create: false
+      name: headlamp-oidc
+    externalSecret:
+      enabled: true
+      name: headlamp-oidc
+    issuerURL: "https://idp.wavey.io"
+    callbackURL: "https://k8s-us-ord.wavey.io/oidc-callback"
+    validatorClientID: "QdLiUA5RC81Q9o9itEAnh4CummEBksZ3"
+    validatorIssuerURL: "https://idp.wavey.io"
+    scopes: "openid,email,profile"
+    usePKCE: true
+    useCookie: true
 
 clusterRoleBinding:
   create: true
@@ -17,9 +31,6 @@ ingress:
   enabled: true
   ingressClassName: haproxy
   annotations:
-    haproxy.org/auth-type: basic-auth
-    haproxy.org/auth-secret: headlamp-basic-auth
-    haproxy.org/auth-realm: "Wavey Kubernetes Admin"
     haproxy.org/ssl-redirect: "true"
   hosts:
     - host: k8s-us-ord.wavey.io

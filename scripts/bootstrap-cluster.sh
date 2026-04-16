@@ -28,6 +28,13 @@ gpu_public="$(terraform -chdir="${TF_DIR}" output -json gpu_worker | jq -r '.pub
 gpu_label="$(terraform -chdir="${TF_DIR}" output -json gpu_worker | jq -r '.label')"
 pod_cidr="$(terraform -chdir="${TF_DIR}" output -raw pod_cidr)"
 service_cidr="$(terraform -chdir="${TF_DIR}" output -raw service_cidr)"
+oidc_issuer_url="${OIDC_ISSUER_URL:-}"
+oidc_client_id="${OIDC_CLIENT_ID:-}"
+oidc_username_claim="${OIDC_USERNAME_CLAIM:-email}"
+oidc_username_prefix="${OIDC_USERNAME_PREFIX:--}"
+oidc_groups_claim="${OIDC_GROUPS_CLAIM:-groups}"
+oidc_groups_prefix="${OIDC_GROUPS_PREFIX:--}"
+oidc_signing_algs="${OIDC_SIGNING_ALGS:-ES256}"
 
 copy_scripts() {
   local host="$1"
@@ -90,7 +97,38 @@ run_remote_step "${gpu_public}" "bash /root/install-arch-base.sh gpu-worker ${gp
 run_remote_step "${gpu_public}" "bash /root/install-gpu-node.sh"
 reboot_and_wait "${gpu_public}"
 
-run_remote_step "${cp_public}" "kubeadm init --apiserver-advertise-address=${cp_private} --pod-network-cidr=${pod_cidr} --service-cidr=${service_cidr} --apiserver-cert-extra-sans=${cp_public}" | tee "${TMP_DIR}/kubeadm-init.log"
+cat > "${TMP_DIR}/kubeadm-init.yaml" <<EOF
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: InitConfiguration
+localAPIEndpoint:
+  advertiseAddress: ${cp_private}
+  bindPort: 6443
+---
+apiVersion: kubeadm.k8s.io/v1beta4
+kind: ClusterConfiguration
+networking:
+  podSubnet: ${pod_cidr}
+  serviceSubnet: ${service_cidr}
+apiServer:
+  certSANs:
+    - ${cp_public}
+EOF
+
+if [[ -n "${oidc_issuer_url}" && -n "${oidc_client_id}" ]]; then
+  cat >> "${TMP_DIR}/kubeadm-init.yaml" <<EOF
+  extraArgs:
+    oidc-issuer-url: ${oidc_issuer_url}
+    oidc-client-id: ${oidc_client_id}
+    oidc-username-claim: ${oidc_username_claim}
+    oidc-username-prefix: "${oidc_username_prefix}"
+    oidc-groups-claim: ${oidc_groups_claim}
+    oidc-groups-prefix: "${oidc_groups_prefix}"
+    oidc-signing-algs: ${oidc_signing_algs}
+EOF
+fi
+
+scp -o StrictHostKeyChecking=accept-new "${TMP_DIR}/kubeadm-init.yaml" root@"${cp_public}":/root/kubeadm-init.yaml
+run_remote_step "${cp_public}" "kubeadm init --config=/root/kubeadm-init.yaml" | tee "${TMP_DIR}/kubeadm-init.log"
 ssh root@"${cp_public}" "mkdir -p /root/.kube && cp /etc/kubernetes/admin.conf /root/.kube/config"
 run_remote_step "${cp_public}" "kubeadm token create --print-join-command" > "${TMP_DIR}/join.sh"
 chmod +x "${TMP_DIR}/join.sh"

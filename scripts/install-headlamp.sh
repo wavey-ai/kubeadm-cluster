@@ -4,13 +4,21 @@ set -euo pipefail
 MANIFESTS_DIR="${MANIFESTS_DIR:-/root/manifests}"
 HEADLAMP_NAMESPACE="${HEADLAMP_NAMESPACE:-headlamp}"
 HEADLAMP_CHART_VERSION="${HEADLAMP_CHART_VERSION:-0.41.0}"
-HEADLAMP_BASIC_AUTH_USER="${HEADLAMP_BASIC_AUTH_USER:-admin}"
-HEADLAMP_BASIC_AUTH_HASH="${HEADLAMP_BASIC_AUTH_HASH:-}"
 HEADLAMP_TLS_CRT_B64="${HEADLAMP_TLS_CRT_B64:-}"
 HEADLAMP_TLS_KEY_B64="${HEADLAMP_TLS_KEY_B64:-}"
+HEADLAMP_OIDC_SECRET_NAME="${HEADLAMP_OIDC_SECRET_NAME:-headlamp-oidc}"
+HEADLAMP_OIDC_CLIENT_ID="${HEADLAMP_OIDC_CLIENT_ID:-}"
+HEADLAMP_OIDC_CLIENT_SECRET="${HEADLAMP_OIDC_CLIENT_SECRET:-}"
+HEADLAMP_OIDC_ISSUER_URL="${HEADLAMP_OIDC_ISSUER_URL:-}"
+HEADLAMP_OIDC_CALLBACK_URL="${HEADLAMP_OIDC_CALLBACK_URL:-https://k8s-us-ord.wavey.io/oidc-callback}"
+HEADLAMP_OIDC_SCOPES="${HEADLAMP_OIDC_SCOPES:-openid,email,profile}"
+HEADLAMP_OIDC_VALIDATOR_CLIENT_ID="${HEADLAMP_OIDC_VALIDATOR_CLIENT_ID:-${HEADLAMP_OIDC_CLIENT_ID}}"
+HEADLAMP_OIDC_VALIDATOR_ISSUER_URL="${HEADLAMP_OIDC_VALIDATOR_ISSUER_URL:-${HEADLAMP_OIDC_ISSUER_URL}}"
+HEADLAMP_OIDC_USE_PKCE="${HEADLAMP_OIDC_USE_PKCE:-true}"
+HEADLAMP_OIDC_ADMIN_GROUP="${HEADLAMP_OIDC_ADMIN_GROUP:-headlamp:admins}"
 
-if [[ -z "${HEADLAMP_BASIC_AUTH_HASH}" ]]; then
-  echo "HEADLAMP_BASIC_AUTH_HASH is required" >&2
+if [[ -z "${HEADLAMP_OIDC_CLIENT_ID}" || -z "${HEADLAMP_OIDC_CLIENT_SECRET}" || -z "${HEADLAMP_OIDC_ISSUER_URL}" ]]; then
+  echo "HEADLAMP_OIDC_CLIENT_ID, HEADLAMP_OIDC_CLIENT_SECRET, and HEADLAMP_OIDC_ISSUER_URL are required" >&2
   exit 1
 fi
 
@@ -29,14 +37,40 @@ printf '%s' "${HEADLAMP_TLS_KEY_B64}" | base64 -d > "${tmp_dir}/tls.key"
 
 kubectl create namespace "${HEADLAMP_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl -n "${HEADLAMP_NAMESPACE}" create secret generic headlamp-basic-auth \
-  --from-literal="${HEADLAMP_BASIC_AUTH_USER}=${HEADLAMP_BASIC_AUTH_HASH}" \
+kubectl -n "${HEADLAMP_NAMESPACE}" delete secret headlamp-basic-auth --ignore-not-found
+
+kubectl -n "${HEADLAMP_NAMESPACE}" create secret generic "${HEADLAMP_OIDC_SECRET_NAME}" \
+  --from-literal=OIDC_CLIENT_ID="${HEADLAMP_OIDC_CLIENT_ID}" \
+  --from-literal=OIDC_CLIENT_SECRET="${HEADLAMP_OIDC_CLIENT_SECRET}" \
+  --from-literal=OIDC_ISSUER_URL="${HEADLAMP_OIDC_ISSUER_URL}" \
+  --from-literal=OIDC_SCOPES="${HEADLAMP_OIDC_SCOPES}" \
+  --from-literal=OIDC_CALLBACK_URL="${HEADLAMP_OIDC_CALLBACK_URL}" \
+  --from-literal=OIDC_VALIDATOR_CLIENT_ID="${HEADLAMP_OIDC_VALIDATOR_CLIENT_ID}" \
+  --from-literal=OIDC_VALIDATOR_ISSUER_URL="${HEADLAMP_OIDC_VALIDATOR_ISSUER_URL}" \
+  --from-literal=OIDC_USE_PKCE="${HEADLAMP_OIDC_USE_PKCE}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n "${HEADLAMP_NAMESPACE}" create secret tls headlamp-tls \
   --cert="${tmp_dir}/tls.crt" \
   --key="${tmp_dir}/tls.key" \
   --dry-run=client -o yaml | kubectl apply -f -
+
+if [[ -n "${HEADLAMP_OIDC_ADMIN_GROUP}" ]]; then
+  cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-oidc-admins
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: Group
+    name: ${HEADLAMP_OIDC_ADMIN_GROUP}
+    apiGroup: rbac.authorization.k8s.io
+EOF
+fi
 
 helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
 helm repo update
