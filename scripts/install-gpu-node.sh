@@ -23,14 +23,14 @@ pacman -S --needed --noconfirm \
 mkdir -p /etc/systemd/system/nvidia-persistenced.service.d
 cat >/etc/systemd/system/nvidia-persistenced.service.d/override.conf <<'EOF'
 [Unit]
-After=systemd-modules-load.service
-Wants=systemd-modules-load.service
+ConditionPathExists=/dev/nvidiactl
+After=multi-user.target
 
 [Service]
-ExecStartPre=
-ExecStartPre=/usr/bin/bash -lc 'for _ in $(seq 1 30); do [ -e /dev/nvidiactl ] && exit 0; /usr/bin/udevadm settle || true; sleep 1; done; exit 1'
+ExecStart=
+ExecStart=/usr/bin/nvidia-persistenced --user root
 Restart=on-failure
-RestartSec=5
+RestartSec=2
 EOF
 
 systemctl daemon-reload
