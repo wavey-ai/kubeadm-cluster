@@ -48,6 +48,8 @@ spec:
         app.kubernetes.io/name: gpu-vram-headroom
     spec:
       serviceAccountName: gpu-vram-headroom
+      imagePullSecrets:
+        - name: ghcr-wavey-ai
       hostPID: true
       nodeSelector:
         wavey.ai/gpu: "true"
