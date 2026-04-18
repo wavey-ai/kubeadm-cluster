@@ -34,6 +34,8 @@ helm upgrade --install nvidia-device-plugin nvdp/nvidia-device-plugin \
   --wait \
   --timeout 10m
 
+kubectl apply -f "${MANIFESTS_DIR}/gpu-vram-headroom/operator.yaml"
+
 helm upgrade --install haproxy-ingress haproxytech/kubernetes-ingress \
   --namespace haproxy-controller \
   --create-namespace \

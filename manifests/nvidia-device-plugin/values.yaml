@@ -1,2 +1,45 @@
+config:
+  default: default
+  map:
+    default: |-
+      version: v1
+      flags:
+        migStrategy: none
+        failOnInitError: true
+        nvidiaDriverRoot: "/"
+        plugin:
+          deviceListStrategy: envvar
+          deviceIDStrategy: uuid
+    mps-4: |-
+      version: v1
+      flags:
+        migStrategy: none
+        failOnInitError: true
+        nvidiaDriverRoot: "/"
+        plugin:
+          deviceListStrategy: envvar
+          deviceIDStrategy: uuid
+      sharing:
+        mps:
+          renameByDefault: true
+          resources:
+            - name: nvidia.com/gpu
+              replicas: 4
+    mps-8: |-
+      version: v1
+      flags:
+        migStrategy: none
+        failOnInitError: true
+        nvidiaDriverRoot: "/"
+        plugin:
+          deviceListStrategy: envvar
+          deviceIDStrategy: uuid
+      sharing:
+        mps:
+          renameByDefault: true
+          resources:
+            - name: nvidia.com/gpu
+              replicas: 8
+
 nodeSelector:
   wavey.ai/gpu: "true"

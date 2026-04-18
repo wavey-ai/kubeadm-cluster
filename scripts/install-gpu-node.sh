@@ -20,10 +20,29 @@ pacman -S --needed --noconfirm \
   nvidia-open-dkms \
   nvidia-utils
 
-systemctl enable nvidia-persistenced || true
+mkdir -p /etc/systemd/system/nvidia-persistenced.service.d
+cat >/etc/systemd/system/nvidia-persistenced.service.d/override.conf <<'EOF'
+[Unit]
+After=systemd-modules-load.service
+Wants=systemd-modules-load.service
+
+[Service]
+ExecStartPre=
+ExecStartPre=/usr/bin/bash -lc 'for _ in $(seq 1 30); do [ -e /dev/nvidiactl ] && exit 0; /usr/bin/udevadm settle || true; sleep 1; done; exit 1'
+Restart=on-failure
+RestartSec=5
+EOF
+
+systemctl daemon-reload
+systemctl enable --now nvidia-persistenced || true
 nvidia-ctk runtime configure --runtime=containerd --set-as-default
 systemctl restart containerd
 
 if command -v nvidia-smi >/dev/null 2>&1; then
+  nvidia-smi -pm 1 || true
   nvidia-smi || true
+fi
+
+if command -v nvidia-cuda-mps-control >/dev/null 2>&1; then
+  echo "MPS runtime is available on this host"
 fi
