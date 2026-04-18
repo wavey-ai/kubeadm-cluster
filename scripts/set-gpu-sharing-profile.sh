@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -ne 2 ]]; then
-  echo "usage: $0 <node-name> <default|mps-4|mps-8>" >&2
+  echo "usage: $0 <node-name> <default|mps-2|mps-4|mps-8>" >&2
   exit 1
 fi
 
@@ -16,7 +16,7 @@ case "$profile" in
     kubectl label node "$node_name" nvidia.com/device-plugin.config=default --overwrite
     kubectl label node "$node_name" nvidia.com/mps.capable- || true
     ;;
-  mps-4|mps-8)
+  mps-2|mps-4|mps-8)
     kubectl label node "$node_name" \
       nvidia.com/device-plugin.config="$profile" \
       nvidia.com/mps.capable=true \

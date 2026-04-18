@@ -10,6 +10,21 @@ config:
         plugin:
           deviceListStrategy: envvar
           deviceIDStrategy: uuid
+    mps-2: |-
+      version: v1
+      flags:
+        migStrategy: none
+        failOnInitError: true
+        nvidiaDriverRoot: "/"
+        plugin:
+          deviceListStrategy: envvar
+          deviceIDStrategy: uuid
+      sharing:
+        mps:
+          renameByDefault: false
+          resources:
+            - name: nvidia.com/gpu
+              replicas: 2
     mps-4: |-
       version: v1
       flags:
@@ -21,7 +36,7 @@ config:
           deviceIDStrategy: uuid
       sharing:
         mps:
-          renameByDefault: true
+          renameByDefault: false
           resources:
             - name: nvidia.com/gpu
               replicas: 4
@@ -36,7 +51,7 @@ config:
           deviceIDStrategy: uuid
       sharing:
         mps:
-          renameByDefault: true
+          renameByDefault: false
           resources:
             - name: nvidia.com/gpu
               replicas: 8

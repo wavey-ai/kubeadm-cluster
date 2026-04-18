@@ -68,19 +68,20 @@ This increases operational risk relative to a slower-moving distro, but it keeps
 
 ## GPU Sharing Profiles
 
-The NVIDIA device plugin is installed with three per-node profiles:
+The NVIDIA device plugin is installed with four per-node profiles:
 
 - `default`
+- `mps-2`
 - `mps-4`
 - `mps-8`
 
 Use [`scripts/set-gpu-sharing-profile.sh`](scripts/set-gpu-sharing-profile.sh) to switch a node:
 
 ```bash
-KUBECONFIG=~/.kube/config ./scripts/set-gpu-sharing-profile.sh wavey-kubeadm-gpu-01 mps-4
+KUBECONFIG=~/.kube/config ./scripts/set-gpu-sharing-profile.sh wavey-kubeadm-gpu-01 mps-2
 ```
 
-That works by setting `nvidia.com/device-plugin.config` on the target node. MPS is opt-in per node; the cluster does not force every GPU node into shared mode by default.
+That works by setting `nvidia.com/device-plugin.config` on the target node. MPS is opt-in per node; the cluster does not force every GPU node into shared mode by default. Shared profiles keep the advertised resource name as `nvidia.com/gpu`, so workloads do not need a separate `.shared` resource key.
 
 ## GPU VRAM Headroom Labels
 
