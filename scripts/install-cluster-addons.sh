@@ -20,6 +20,11 @@ kubectl label node "${cpu_node}" wavey.ai/ingress=true wavey.ai/node-role=cpu --
 kubectl label node "${gpu_node}" wavey.ai/gpu=true wavey.ai/node-role=gpu nvidia.com/gpu.present=true --overwrite
 
 kubectl apply -f "https://github.com/flannel-io/flannel/releases/download/${FLANNEL_VERSION}/kube-flannel.yml"
+kubectl patch daemonset/kube-flannel-ds \
+  -n kube-flannel \
+  --type strategic \
+  --patch-file "${MANIFESTS_DIR}/flannel/private-ip-patch.yaml"
+kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=10m
 kubectl wait --for=condition=Ready nodes --all --timeout=10m
 
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
@@ -43,3 +48,7 @@ helm upgrade --install haproxy-ingress haproxytech/kubernetes-ingress \
   -f "${MANIFESTS_DIR}/haproxy/values.yaml" \
   --wait \
   --timeout 10m
+
+if [[ -n "${HEADLAMP_TLS_CRT_B64:-}" && -n "${HEADLAMP_TLS_KEY_B64:-}" && -n "${HEADLAMP_OIDC_CLIENT_ID:-}" && -n "${HEADLAMP_OIDC_CLIENT_SECRET:-}" && -n "${HEADLAMP_OIDC_ISSUER_URL:-}" ]]; then
+  bash /root/install-headlamp.sh
+fi

@@ -81,3 +81,11 @@ helm upgrade --install headlamp headlamp/headlamp \
   -f "${MANIFESTS_DIR}/headlamp/values.yaml" \
   --wait \
   --timeout 10m
+
+if [[ -f "${MANIFESTS_DIR}/headlamp/login-service.yaml" ]]; then
+  kubectl apply -f "${MANIFESTS_DIR}/headlamp/login-service.yaml"
+fi
+
+if [[ -f "${MANIFESTS_DIR}/headlamp/login-ingress.yaml" ]]; then
+  kubectl apply -f "${MANIFESTS_DIR}/headlamp/login-ingress.yaml"
+fi

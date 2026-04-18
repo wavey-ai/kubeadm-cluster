@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp-login
+  namespace: headlamp
+  annotations:
+    haproxy.org/ssl-redirect: "true"
+    haproxy.org/backend-config-snippet: |
+      http-request del-header Authorization
+      http-request set-path /oidc
+      http-request set-query cluster=wavey-us-ord-internal
+      http-response set-header Clear-Site-Data "\"cache\", \"cookies\", \"storage\""
+      http-response set-header Cache-Control "no-store"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord.0=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord.1=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord.2=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal.0=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal.1=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal.2=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal.3=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal; Max-Age=0"
+spec:
+  ingressClassName: haproxy
+  rules:
+    - host: k8s-us-ord.wavey.io
+      http:
+        paths:
+          - path: /c/wavey-us-ord/login
+            pathType: Exact
+            backend:
+              service:
+                name: headlamp-login
+                port:
+                  number: 80
+          - path: /c/wavey-us-ord-internal/login
+            pathType: Exact
+            backend:
+              service:
+                name: headlamp-login
+                port:
+                  number: 80
+  tls:
+    - secretName: headlamp-tls
+      hosts:
+        - k8s-us-ord.wavey.io
