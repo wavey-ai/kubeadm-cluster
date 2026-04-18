@@ -29,21 +29,21 @@ while true; do
 
   kubectl patch node "$NODE_NAME" --type merge -p "$(cat <<EOF
 {
-  \"metadata\": {
-    \"annotations\": {
-      \"wavey.ai/gpu-vram-total-mib\": \"${total_mib}\",
-      \"wavey.ai/gpu-vram-used-mib\": \"${used_mib}\",
-      \"wavey.ai/gpu-vram-free-mib\": \"${free_mib}\",
-      \"wavey.ai/gpu-uuid\": \"${gpu_uuid}\"
+  "metadata": {
+    "annotations": {
+      "wavey.ai/gpu-vram-total-mib": "${total_mib}",
+      "wavey.ai/gpu-vram-used-mib": "${used_mib}",
+      "wavey.ai/gpu-vram-free-mib": "${free_mib}",
+      "wavey.ai/gpu-uuid": "${gpu_uuid}"
     },
-    \"labels\": {
-      \"wavey.ai/gpu-vram-free-ge-2048mib\": \"$(bool_label "$free_mib" 2048)\",
-      \"wavey.ai/gpu-vram-free-ge-3072mib\": \"$(bool_label "$free_mib" 3072)\",
-      \"wavey.ai/gpu-vram-free-ge-4096mib\": \"$(bool_label "$free_mib" 4096)\",
-      \"wavey.ai/gpu-vram-free-ge-6144mib\": \"$(bool_label "$free_mib" 6144)\",
-      \"wavey.ai/gpu-vram-free-ge-8192mib\": \"$(bool_label "$free_mib" 8192)\",
-      \"wavey.ai/gpu-vram-free-ge-12288mib\": \"$(bool_label "$free_mib" 12288)\",
-      \"wavey.ai/gpu-vram-free-ge-16384mib\": \"$(bool_label "$free_mib" 16384)\"
+    "labels": {
+      "wavey.ai/gpu-vram-free-ge-2048mib": "$(bool_label "$free_mib" 2048)",
+      "wavey.ai/gpu-vram-free-ge-3072mib": "$(bool_label "$free_mib" 3072)",
+      "wavey.ai/gpu-vram-free-ge-4096mib": "$(bool_label "$free_mib" 4096)",
+      "wavey.ai/gpu-vram-free-ge-6144mib": "$(bool_label "$free_mib" 6144)",
+      "wavey.ai/gpu-vram-free-ge-8192mib": "$(bool_label "$free_mib" 8192)",
+      "wavey.ai/gpu-vram-free-ge-12288mib": "$(bool_label "$free_mib" 12288)",
+      "wavey.ai/gpu-vram-free-ge-16384mib": "$(bool_label "$free_mib" 16384)"
     }
   }
 }
