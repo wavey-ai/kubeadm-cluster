@@ -37,7 +37,8 @@ ingress:
     haproxy.org/frontend-config-snippet: |
       acl headlamp_old_cluster path_reg ^/c/wavey-us-ord(?:/|$)
       acl headlamp_old_internal path_reg ^/c/wavey-us-ord-internal(?:/|$)
-      http-request redirect code 302 location https://k8s-us-ord.wavey.io/c/wavey-us-ord-internal-v3/login if headlamp_old_cluster || headlamp_old_internal
+      acl headlamp_old_internal_v3 path_reg ^/c/wavey-us-ord-internal-v3(?:/|$)
+      http-request redirect code 302 location https://k8s-us-ord.wavey.io/c/wavey-us-ord-internal-v2/login if headlamp_old_cluster || headlamp_old_internal || headlamp_old_internal_v3
     haproxy.org/backend-config-snippet: |
       http-request del-header Authorization
       http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord.0=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord; Max-Age=0"
