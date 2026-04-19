@@ -18,6 +18,8 @@ config:
     scopes: "openid,email,profile"
     usePKCE: true
     useCookie: true
+  extraArgs:
+    - -oidc-ca-file=/etc/ssl/certs/ca-certificates.crt
 
 clusterRoleBinding:
   create: true
