@@ -37,7 +37,7 @@ ingress:
     haproxy.org/frontend-config-snippet: |
       acl headlamp_old_cluster path_reg ^/c/wavey-us-ord(?:/|$)
       acl headlamp_old_internal path_reg ^/c/wavey-us-ord-internal(?:/|$)
-      http-request redirect code 302 location https://k8s-us-ord.wavey.io/c/wavey-us-ord-internal-v2/login if headlamp_old_cluster || headlamp_old_internal
+      http-request redirect code 302 location https://k8s-us-ord.wavey.io/c/wavey-us-ord-internal-v3/login if headlamp_old_cluster || headlamp_old_internal
     haproxy.org/backend-config-snippet: |
       http-request del-header Authorization
       http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord.0=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord; Max-Age=0"
@@ -52,6 +52,12 @@ ingress:
       http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal.3=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal; Max-Age=0"
       http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal.4=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal; Max-Age=0"
       http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal.5=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal-v2.0=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal-v2; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal-v2.1=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal-v2; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal-v2.2=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal-v2; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal-v2.3=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal-v2; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal-v2.4=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal-v2; Max-Age=0"
+      http-response add-header Set-Cookie "headlamp-auth-wavey-us-ord-internal-v2.5=; HttpOnly; Secure; SameSite=Strict; Path=/clusters/wavey-us-ord-internal-v2; Max-Age=0"
   hosts:
     - host: k8s-us-ord.wavey.io
       paths:
