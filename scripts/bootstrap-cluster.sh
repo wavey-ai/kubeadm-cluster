@@ -94,7 +94,11 @@ done
 
 run_remote_step "${cp_public}" "bash /root/install-arch-base.sh control-plane ${cp_label}"
 run_remote_step "${cpu_public}" "bash /root/install-arch-base.sh cpu-worker ${cpu_label}"
-run_remote_step "${gpu_public}" "bash /root/install-arch-base.sh gpu-worker ${gpu_label}"
+gpu_arch_base_prefix=""
+if [[ "${gpu_worker_bootstrap_mode}" == "prebaked" ]]; then
+  gpu_arch_base_prefix="WAVEY_SKIP_FULL_UPGRADE=1 "
+fi
+run_remote_step "${gpu_public}" "${gpu_arch_base_prefix}bash /root/install-arch-base.sh gpu-worker ${gpu_label}"
 
 run_remote_step "${gpu_public}" "bash /root/install-gpu-node.sh ${gpu_worker_bootstrap_mode}"
 if [[ "${gpu_worker_bootstrap_mode}" == "full" ]]; then

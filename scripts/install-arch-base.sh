@@ -3,6 +3,7 @@ set -euo pipefail
 
 role="${1:-generic}"
 node_name="${2:-}"
+skip_full_upgrade="${WAVEY_SKIP_FULL_UPGRADE:-0}"
 
 cat >/etc/pacman.d/mirrorlist <<'EOF'
 Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
@@ -16,6 +17,26 @@ private_ipv4() {
     | awk '{print $4}' \
     | cut -d/ -f1 \
     | awk '/^(10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|192\.168\.)/ { print; exit }'
+}
+
+load_required_module() {
+  local module="$1"
+
+  if modprobe "${module}" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  case "${module}" in
+    overlay)
+      grep -qw overlay /proc/filesystems && return 0
+      ;;
+    br_netfilter)
+      sysctl net.bridge.bridge-nf-call-iptables >/dev/null 2>&1 && return 0
+      ;;
+  esac
+
+  echo "required kernel module unavailable: ${module}" >&2
+  exit 1
 }
 
 node_ip="$(private_ipv4 || true)"
@@ -41,8 +62,8 @@ overlay
 br_netfilter
 EOF
 
-modprobe overlay
-modprobe br_netfilter
+load_required_module overlay
+load_required_module br_netfilter
 
 cat >/etc/sysctl.d/99-wavey-k8s.conf <<'EOF'
 net.bridge.bridge-nf-call-iptables = 1
@@ -54,8 +75,10 @@ EOF
 sysctl --system
 
 pacman -Sy --noconfirm archlinux-keyring
-rm -rf /usr/lib/firmware/nvidia
-pacman -Syu --noconfirm
+if [[ "${skip_full_upgrade}" != "1" ]]; then
+  rm -rf /usr/lib/firmware/nvidia
+  pacman -Syu --noconfirm
+fi
 pacman -S --needed --noconfirm \
   base-devel \
   ca-certificates \
