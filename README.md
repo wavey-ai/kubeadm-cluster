@@ -25,7 +25,7 @@ It does not own application code.
 
 - `terraform/`: Linode instances, firewalls, and outputs
 - `scripts/`: reproducible host bootstrap and cluster bring-up
-- `cloud-init/`: reserved for future custom-image bootstrapping
+- `cloud-init/`: reserved for future first-boot host customization
 - `manifests/`: cluster add-ons such as HAProxy ingress
 - `docs/`: architecture and operational notes
 
@@ -40,7 +40,7 @@ The first phase provisions and boots a minimal kubeadm cluster. The bootstrap ph
 
 - upgrades and prepares all Arch nodes
 - configures the NVIDIA runtime on the GPU node
-- installs CUDA userland and MPS-capable tooling on the GPU node
+- either installs the NVIDIA/CUDA stack on the GPU node or validates a prebaked GPU image
 - initializes kubeadm
 - joins the CPU and GPU workers
 - installs Flannel
@@ -50,7 +50,12 @@ The first phase provisions and boots a minimal kubeadm cluster. The bootstrap ph
 
 ## Node OS
 
-All nodes use `linode/arch`.
+Control plane and CPU workers use `var.image`, which defaults to `linode/arch`.
+
+The GPU worker uses:
+
+- `var.image` by default
+- `var.gpu_worker_image` when you want a dedicated prebaked GPU image
 
 That is intentional:
 
@@ -59,6 +64,25 @@ That is intentional:
 - GPU worker: Arch
 
 This increases operational risk relative to a slower-moving distro, but it keeps the entire stack aligned with the chosen host baseline.
+
+## Custom GPU Images
+
+The repo supports a prebaked GPU worker image for CUDA, TensorRT, and ONNX Runtime host stacks.
+
+Terraform knobs:
+
+- `gpu_worker_image`: optional private Linode image slug for the GPU worker
+- `gpu_worker_bootstrap_mode = "full"`: install the NVIDIA/CUDA stack from packages on first boot
+- `gpu_worker_bootstrap_mode = "prebaked"`: assume the image already contains that stack and only verify it plus wire the NVIDIA container runtime into containerd
+
+Typical flow:
+
+1. Build and validate a GPU host image out of band.
+2. Cut a private Linode image from that host with [`scripts/create-linode-image.sh`](scripts/create-linode-image.sh).
+3. Set `gpu_worker_image` and `gpu_worker_bootstrap_mode = "prebaked"` in `terraform.tfvars`.
+4. Run `make terraform-apply` and `make bootstrap`.
+
+In prebaked mode the cluster bootstrap still runs the normal Kubernetes host preparation from `install-arch-base.sh`; it only skips reinstalling the NVIDIA/CUDA packages on the GPU worker.
 
 ## Pinned Add-ons
 

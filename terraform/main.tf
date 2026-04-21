@@ -3,8 +3,9 @@ provider "linode" {
 }
 
 locals {
-  common_tags    = concat(var.tags, ["cluster:${var.cluster_name}"])
-  ssh_public_key = trimspace(file(var.ssh_public_key_path))
+  common_tags      = concat(var.tags, ["cluster:${var.cluster_name}"])
+  ssh_public_key   = trimspace(file(var.ssh_public_key_path))
+  gpu_worker_image = trimspace(var.gpu_worker_image) != "" ? trimspace(var.gpu_worker_image) : var.image
   private_cidrs = [
     "10.0.0.0/8",
     "172.16.0.0/12",
@@ -47,7 +48,7 @@ resource "linode_instance" "cpu_worker" {
 resource "linode_instance" "gpu_worker" {
   label           = "${var.cluster_name}-gpu-01"
   region          = var.region
-  image           = var.image
+  image           = local.gpu_worker_image
   type            = var.gpu_worker_type
   root_pass       = random_password.root_pass.result
   authorized_keys = [local.ssh_public_key]
@@ -179,4 +180,3 @@ resource "linode_firewall" "gpu_worker" {
   inbound_policy  = "DROP"
   outbound_policy = "ACCEPT"
 }
-

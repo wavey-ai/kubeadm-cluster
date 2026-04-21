@@ -22,6 +22,12 @@ variable "image" {
   default     = "linode/arch"
 }
 
+variable "gpu_worker_image" {
+  description = "Optional Linode image slug for the GPU worker. Leave empty to reuse var.image."
+  type        = string
+  default     = ""
+}
+
 variable "ssh_public_key_path" {
   description = "Path to the SSH public key for created hosts."
   type        = string
@@ -55,6 +61,17 @@ variable "gpu_worker_type" {
   description = "Linode type for the GPU worker."
   type        = string
   default     = "g2-gpu-rtx4000a1-s"
+}
+
+variable "gpu_worker_bootstrap_mode" {
+  description = "How the GPU worker host is prepared. 'full' installs the NVIDIA/CUDA stack from packages. 'prebaked' assumes a custom image already contains that stack and only verifies and wires the runtime."
+  type        = string
+  default     = "full"
+
+  validation {
+    condition     = contains(["full", "prebaked"], var.gpu_worker_bootstrap_mode)
+    error_message = "gpu_worker_bootstrap_mode must be one of: full, prebaked."
+  }
 }
 
 variable "pod_cidr" {

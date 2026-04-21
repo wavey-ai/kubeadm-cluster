@@ -24,12 +24,17 @@
 
 ## GPU Strategy
 
-The GPU node bootstrap installs:
+The GPU node supports two bootstrap modes:
 
-- Arch kernel headers
-- NVIDIA driver
-- CUDA userland
-- NVIDIA container toolkit
+- `full`
+  - installs Arch kernel headers
+  - installs the NVIDIA driver
+  - installs CUDA userland
+  - installs the NVIDIA container toolkit
+- `prebaked`
+  - assumes the GPU image already contains the NVIDIA and CUDA stack
+  - verifies the host runtime is present
+  - rewires containerd to use the NVIDIA runtime without reinstalling packages
 
 The node is prepared for standard full-GPU scheduling:
 

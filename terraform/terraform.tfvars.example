@@ -3,6 +3,10 @@ region              = "us-ord"
 image               = "linode/arch"
 ssh_public_key_path = "~/.ssh/id_ed25519.pub"
 
+# Optional: override the GPU worker to boot from a prebaked private image.
+# gpu_worker_image          = "private/12345678"
+# gpu_worker_bootstrap_mode = "prebaked"
+
 admin_ipv4_cidrs = [
   "203.0.113.10/32",
 ]

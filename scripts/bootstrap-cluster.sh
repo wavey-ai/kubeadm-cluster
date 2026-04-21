@@ -26,6 +26,8 @@ cpu_public="$(terraform -chdir="${TF_DIR}" output -json cpu_worker | jq -r '.pub
 cpu_label="$(terraform -chdir="${TF_DIR}" output -json cpu_worker | jq -r '.label')"
 gpu_public="$(terraform -chdir="${TF_DIR}" output -json gpu_worker | jq -r '.public_ip')"
 gpu_label="$(terraform -chdir="${TF_DIR}" output -json gpu_worker | jq -r '.label')"
+gpu_worker_image="$(terraform -chdir="${TF_DIR}" output -raw gpu_worker_image)"
+gpu_worker_bootstrap_mode="$(terraform -chdir="${TF_DIR}" output -raw gpu_worker_bootstrap_mode)"
 pod_cidr="$(terraform -chdir="${TF_DIR}" output -raw pod_cidr)"
 service_cidr="$(terraform -chdir="${TF_DIR}" output -raw service_cidr)"
 oidc_issuer_url="${OIDC_ISSUER_URL:-}"
@@ -94,8 +96,10 @@ run_remote_step "${cp_public}" "bash /root/install-arch-base.sh control-plane ${
 run_remote_step "${cpu_public}" "bash /root/install-arch-base.sh cpu-worker ${cpu_label}"
 run_remote_step "${gpu_public}" "bash /root/install-arch-base.sh gpu-worker ${gpu_label}"
 
-run_remote_step "${gpu_public}" "bash /root/install-gpu-node.sh"
-reboot_and_wait "${gpu_public}"
+run_remote_step "${gpu_public}" "bash /root/install-gpu-node.sh ${gpu_worker_bootstrap_mode}"
+if [[ "${gpu_worker_bootstrap_mode}" == "full" ]]; then
+  reboot_and_wait "${gpu_public}"
+fi
 
 cat > "${TMP_DIR}/kubeadm-init.yaml" <<EOF
 apiVersion: kubeadm.k8s.io/v1beta4
@@ -152,4 +156,6 @@ echo "Control plane label: ${cp_label}"
 echo "Control plane: ${cp_public}"
 echo "CPU worker: ${cpu_public}"
 echo "GPU worker: ${gpu_public}"
+echo "GPU worker image: ${gpu_worker_image}"
+echo "GPU worker bootstrap mode: ${gpu_worker_bootstrap_mode}"
 echo "Local kubeconfig: ${TMP_DIR}/kubeconfig"

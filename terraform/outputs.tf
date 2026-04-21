@@ -28,6 +28,14 @@ output "gpu_worker" {
   }
 }
 
+output "gpu_worker_image" {
+  value = local.gpu_worker_image
+}
+
+output "gpu_worker_bootstrap_mode" {
+  value = var.gpu_worker_bootstrap_mode
+}
+
 output "pod_cidr" {
   value = var.pod_cidr
 }
