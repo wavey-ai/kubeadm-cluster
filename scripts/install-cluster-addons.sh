@@ -27,6 +27,9 @@ kubectl patch daemonset/kube-flannel-ds \
 kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=10m
 kubectl wait --for=condition=Ready nodes --all --timeout=10m
 
+kubectl apply -f "${MANIFESTS_DIR}/local-registry/registry.yaml"
+kubectl rollout status deployment/local-registry -n wavey-system --timeout=10m
+
 helm repo add nvdp https://nvidia.github.io/k8s-device-plugin
 helm repo add haproxytech https://haproxytech.github.io/helm-charts
 helm repo update

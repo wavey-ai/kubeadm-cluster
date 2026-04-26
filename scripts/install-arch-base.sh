@@ -4,6 +4,8 @@ set -euo pipefail
 role="${1:-generic}"
 node_name="${2:-}"
 skip_full_upgrade="${WAVEY_SKIP_FULL_UPGRADE:-0}"
+local_registry_host="${WAVEY_LOCAL_REGISTRY_HOST:-}"
+local_registry_port="${WAVEY_LOCAL_REGISTRY_PORT:-5000}"
 
 cat >/etc/pacman.d/mirrorlist <<'EOF'
 Server = https://geo.mirror.pkgbuild.com/$repo/os/$arch
@@ -111,6 +113,11 @@ EOF
 
 containerd config default >/etc/containerd/config.toml
 sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+
+if [[ -n "${local_registry_host}" ]]; then
+  bash /root/configure-containerd-local-registry.sh "${local_registry_host}" "${local_registry_port}"
+fi
+
 cat >/etc/default/kubelet <<EOF
 KUBELET_EXTRA_ARGS=--node-ip=${node_ip}
 EOF

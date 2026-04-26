@@ -17,6 +17,7 @@ This repo owns:
 - per-node NVIDIA sharing profiles, including MPS
 - GPU VRAM headroom labeling for scheduler-facing placement
 - HAProxy ingress on the CPU worker
+- local OCI registry on the CPU worker for Wavey images
 - NVIDIA device plugin installation on the GPU worker
 
 It does not own application code.
@@ -44,6 +45,7 @@ The first phase provisions and boots a minimal kubeadm cluster. The bootstrap ph
 - initializes kubeadm
 - joins the CPU and GPU workers
 - installs Flannel
+- installs the local registry on the CPU worker
 - installs the NVIDIA device plugin
 - installs the GPU VRAM headroom operator
 - installs HAProxy ingress as a DaemonSet bound to the CPU worker host ports
@@ -83,6 +85,20 @@ Typical flow:
 4. Run `make terraform-apply` and `make bootstrap`.
 
 In prebaked mode the cluster bootstrap still runs the normal Kubernetes host preparation from `install-arch-base.sh`; it only skips reinstalling the NVIDIA/CUDA packages on the GPU worker.
+
+## Local Registry
+
+The cluster runs a single internal registry on the CPU worker at `http://<cpu-private-ip>:5000`.
+
+Bootstrap wires containerd on every node to consult that registry first for `ghcr.io` image pulls. The registry is meant to hold Wavey images that have been seeded or pushed there already; it is not a transparent proxy for arbitrary registries.
+
+Current behavior:
+
+- `ghcr.io` lookups check the CPU worker registry first
+- if the image is present locally, nodes pull it without going back to GHCR
+- if the image is not present locally, containerd falls back to `ghcr.io`
+
+This removes fresh-node dependence on GHCR once the required Wavey images have been seeded into the local registry.
 
 ## Pinned Add-ons
 

@@ -23,6 +23,7 @@ cp_public="$(terraform -chdir="${TF_DIR}" output -json control_plane | jq -r '.p
 cp_private="$(terraform -chdir="${TF_DIR}" output -json control_plane | jq -r '.private_ip')"
 cp_label="$(terraform -chdir="${TF_DIR}" output -json control_plane | jq -r '.label')"
 cpu_public="$(terraform -chdir="${TF_DIR}" output -json cpu_worker | jq -r '.public_ip')"
+cpu_private="$(terraform -chdir="${TF_DIR}" output -json cpu_worker | jq -r '.private_ip')"
 cpu_label="$(terraform -chdir="${TF_DIR}" output -json cpu_worker | jq -r '.label')"
 gpu_public="$(terraform -chdir="${TF_DIR}" output -json gpu_worker | jq -r '.public_ip')"
 gpu_label="$(terraform -chdir="${TF_DIR}" output -json gpu_worker | jq -r '.label')"
@@ -30,6 +31,7 @@ gpu_worker_image="$(terraform -chdir="${TF_DIR}" output -raw gpu_worker_image)"
 gpu_worker_bootstrap_mode="$(terraform -chdir="${TF_DIR}" output -raw gpu_worker_bootstrap_mode)"
 pod_cidr="$(terraform -chdir="${TF_DIR}" output -raw pod_cidr)"
 service_cidr="$(terraform -chdir="${TF_DIR}" output -raw service_cidr)"
+local_registry_port="${LOCAL_REGISTRY_PORT:-5000}"
 oidc_issuer_url="${OIDC_ISSUER_URL:-}"
 oidc_client_id="${OIDC_CLIENT_ID:-}"
 oidc_username_claim="${OIDC_USERNAME_CLAIM:-email}"
@@ -42,6 +44,7 @@ copy_scripts() {
   local host="$1"
   scp -o StrictHostKeyChecking=accept-new \
     "${ROOT_DIR}/scripts/install-arch-base.sh" \
+    "${ROOT_DIR}/scripts/configure-containerd-local-registry.sh" \
     "${ROOT_DIR}/scripts/install-gpu-node.sh" \
     "${ROOT_DIR}/scripts/install-cluster-addons.sh" \
     "${ROOT_DIR}/scripts/install-headlamp.sh" \
@@ -92,13 +95,13 @@ for host in "${cp_public}" "${cpu_public}" "${gpu_public}"; do
   copy_scripts "${host}"
 done
 
-run_remote_step "${cp_public}" "bash /root/install-arch-base.sh control-plane ${cp_label}"
-run_remote_step "${cpu_public}" "bash /root/install-arch-base.sh cpu-worker ${cpu_label}"
+run_remote_step "${cp_public}" "WAVEY_LOCAL_REGISTRY_HOST=${cpu_private} WAVEY_LOCAL_REGISTRY_PORT=${local_registry_port} bash /root/install-arch-base.sh control-plane ${cp_label}"
+run_remote_step "${cpu_public}" "WAVEY_LOCAL_REGISTRY_HOST=${cpu_private} WAVEY_LOCAL_REGISTRY_PORT=${local_registry_port} bash /root/install-arch-base.sh cpu-worker ${cpu_label}"
 gpu_arch_base_prefix=""
 if [[ "${gpu_worker_bootstrap_mode}" == "prebaked" ]]; then
   gpu_arch_base_prefix="WAVEY_SKIP_FULL_UPGRADE=1 "
 fi
-run_remote_step "${gpu_public}" "${gpu_arch_base_prefix}bash /root/install-arch-base.sh gpu-worker ${gpu_label}"
+run_remote_step "${gpu_public}" "WAVEY_LOCAL_REGISTRY_HOST=${cpu_private} WAVEY_LOCAL_REGISTRY_PORT=${local_registry_port} ${gpu_arch_base_prefix}bash /root/install-arch-base.sh gpu-worker ${gpu_label}"
 
 run_remote_step "${gpu_public}" "bash /root/install-gpu-node.sh ${gpu_worker_bootstrap_mode}"
 if [[ "${gpu_worker_bootstrap_mode}" == "full" ]]; then
@@ -162,4 +165,5 @@ echo "CPU worker: ${cpu_public}"
 echo "GPU worker: ${gpu_public}"
 echo "GPU worker image: ${gpu_worker_image}"
 echo "GPU worker bootstrap mode: ${gpu_worker_bootstrap_mode}"
+echo "Local registry mirror: ${cpu_private}:${local_registry_port}"
 echo "Local kubeconfig: ${TMP_DIR}/kubeconfig"

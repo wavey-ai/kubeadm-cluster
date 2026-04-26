@@ -19,8 +19,17 @@
 
 - public ingress lands directly on the CPU worker public IP
 - HAProxy ingress binds `80/443` via host ports on the CPU worker
+- the CPU worker also binds `5000` on its private IP for the internal registry
 - east-west traffic uses Linode private IPs
 - control plane API is exposed only as much as kubeadm requires
+
+## Image Distribution
+
+- a single local OCI registry runs on the CPU worker
+- it persists its data on the CPU worker host at `/var/lib/local-registry`
+- containerd on each node is configured to consult the CPU worker registry first for `ghcr.io` images
+- the local registry only serves images that have already been pushed or seeded there
+- if an image is missing locally, containerd falls back to `ghcr.io`
 
 ## GPU Strategy
 
